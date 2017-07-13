@@ -23,6 +23,7 @@ public class MusicService extends Service {
     private MediaPlayer mediaPlayer;
     private int position;
     private boolean isPlaying = false;
+    private boolean paused = false;
 
 
     public class LocalBinder extends Binder {
@@ -78,6 +79,19 @@ public class MusicService extends Service {
         }
     }
 
+    public void pauseMusic(){
+        if(isPlaying()){
+            if(!paused){
+                mediaPlayer.pause();
+                paused = true;
+            } else {
+                mediaPlayer.start();
+                paused=false;
+            }
+        }
+
+    }
+
     public void stopMusic(){
         mediaPlayer.stop();
         mediaPlayer.release();
@@ -87,4 +101,6 @@ public class MusicService extends Service {
     public boolean isPlaying() {
         return isPlaying;
     }
+
+
 }
