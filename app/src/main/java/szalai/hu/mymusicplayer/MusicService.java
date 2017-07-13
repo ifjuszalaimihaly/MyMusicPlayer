@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -24,10 +25,11 @@ public class MusicService extends Service {
     private int position;
     private boolean isPlaying = false;
     private boolean paused = false;
+    private ArrayList<String> list;
 
 
     public class LocalBinder extends Binder {
-        MusicService getLocalService(){
+        MusicService getLocalService() {
             return MusicService.this;
         }
     }
@@ -40,7 +42,7 @@ public class MusicService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        Log.i("info","binded");
+        Log.i("info", "binded");
         return binder;
     }
 
@@ -57,42 +59,66 @@ public class MusicService extends Service {
         return super.onUnbind(intent);
     }
 
-    public void playMusic(Intent intent){
-
-        position = intent.getIntExtra("position",0);
-        final ArrayList<String> list = (ArrayList<String>) intent.getSerializableExtra("list");
-        Log.i("info",list.get(position));
+    public void playMusic(Intent intent) {
+        position = intent.getIntExtra("position", 0);
+        list = (ArrayList<String>) intent.getSerializableExtra("list");
+        Log.i("info", list.get(position));
+        while (!extensionTest(list.get(position))){
+            position++;
+        }
         try {
             mediaPlayer = MediaPlayer.create(this, Uri.parse(list.get(position)));
             mediaPlayer.start();
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    position++;
+                    try {
+                        while (!extensionTest(list.get(position))) {
+                            position++;
+                        }
+                    } catch (IndexOutOfBoundsException e){
+                        position = 0;
+                    }
+                    mediaPlayer.reset();
+                    try {
+                        mediaPlayer.setDataSource(MusicService.this, Uri.parse(list.get(position)));
+                        mediaPlayer.prepare();
+                        mediaPlayer.start();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+            });
             isPlaying = true;
-            PendingIntent pendingIntent = PendingIntent.getActivity(MusicService.this,0,new Intent(MusicService.this,MainActivity.class),0);
+            PendingIntent pendingIntent = PendingIntent.getActivity(MusicService.this, 0, new Intent(MusicService.this, MainActivity.class), 0);
             Notification notification = new Notification.Builder(this)
                     .setSmallIcon(R.mipmap.ic_launcher_round)
                     .setContentTitle("Playing music")
                     .setContentText(list.get(position))
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true).build();
-            startForeground(1,notification);
-        }catch (Exception e){
+            startForeground(1, notification);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void pauseMusic(){
-        if(isPlaying()){
-            if(!paused){
+    public void pauseMusic() {
+        if (isPlaying()) {
+            if (!paused) {
                 mediaPlayer.pause();
                 paused = true;
             } else {
                 mediaPlayer.start();
-                paused=false;
+                paused = false;
             }
         }
 
     }
 
-    public void stopMusic(){
+    public void stopMusic() {
         mediaPlayer.stop();
         mediaPlayer.release();
         isPlaying = false;
@@ -102,5 +128,12 @@ public class MusicService extends Service {
         return isPlaying;
     }
 
+    private boolean extensionTest(String fileName){
+        if(fileName.endsWith("mp3") || fileName.endsWith("3gp") || fileName.endsWith("wav") || fileName.endsWith("cda") || fileName.endsWith("ogg") ||fileName.endsWith("wma")){
+            return true;
+        } else {
+            return false;
+        }
+    }
 
 }
