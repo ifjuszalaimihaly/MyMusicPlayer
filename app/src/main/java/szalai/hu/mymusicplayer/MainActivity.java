@@ -27,7 +27,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button start, stop;
+    private Button start, stop, up;
     private ListView listView;
     private String currentPath;
     private boolean bounded;
@@ -64,25 +64,12 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, MusicService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         startService(new Intent(this, MusicService.class));
-        start = (Button) findViewById(R.id.start);
-        stop = (Button) findViewById(R.id.stop);
-        start.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
-        stop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(musicService.isPlaying()) {
-                    musicService.stopMusic();
-                }
-            }
-        });
-        File root = Environment.getExternalStorageDirectory();
+        final File root = Environment.getExternalStorageDirectory();
         currentPath = root.getPath();
         listView = (ListView) findViewById(R.id.listView);
+        start = (Button) findViewById(R.id.start);
+        stop = (Button) findViewById(R.id.stop);
+        up = (Button) findViewById(R.id.up);
         List values = listFiles(root);
         final ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_2, android.R.id.text1, values);
         listView.setAdapter(adapter);
@@ -118,6 +105,35 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        start.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
+        stop.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(musicService.isPlaying()) {
+                    musicService.stopMusic();
+                }
+            }
+        });
+        up.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(currentPath != root.getPath()){
+                    File file = new File(currentPath);
+                    File parent = file.getParentFile();
+                    currentPath = parent.getPath();
+                    List<String> values = listFiles(parent);
+                    listView.setAdapter(new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_2, android.R.id.text1, values));
+
+                }
+            }
+        });
+
+
     }
 
     private List<String> listFiles(File dir) {
