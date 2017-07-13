@@ -79,10 +79,11 @@ public class MusicService extends Service {
             });
             isPlaying = true;
             PendingIntent pendingIntent = PendingIntent.getActivity(MusicService.this, 0, new Intent(MusicService.this, MainActivity.class), 0);
+            int lastSlashIndex = list.get(position).lastIndexOf('/');
+            String title = list.get(position).substring(lastSlashIndex+1);
             Notification notification = new Notification.Builder(this)
                     .setSmallIcon(R.mipmap.ic_launcher_round)
-                    .setContentTitle("Playing music")
-                    .setContentText(list.get(position))
+                    .setContentTitle(title)
                     .setContentIntent(pendingIntent)
                     .setAutoCancel(true).build();
             startForeground(1, notification);
@@ -153,6 +154,14 @@ public class MusicService extends Service {
 
     public boolean isPlaying() {
         return isPlaying;
+    }
+
+    public MediaPlayer getMediaPlayer() {
+        return mediaPlayer;
+    }
+
+    public void setMediaPlayer(MediaPlayer mediaPlayer) {
+        this.mediaPlayer = mediaPlayer;
     }
 
     private boolean extensionTest(String fileName){

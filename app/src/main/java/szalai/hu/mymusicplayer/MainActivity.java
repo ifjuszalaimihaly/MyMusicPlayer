@@ -18,12 +18,15 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.SeekBar;
 import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
     private String currentPath;
     private boolean bounded;
     private MusicService musicService;
+    private SeekBar seekBar;
+    private File root;
 
 
     @Override
@@ -63,7 +68,8 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, MusicService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         startService(new Intent(this, MusicService.class));
-        final File root = Environment.getExternalStorageDirectory();
+        root = Environment.getExternalStorageDirectory();
+        Log.i("info", "root " +root.getPath());
         currentPath = root.getPath();
         listView = (ListView) findViewById(R.id.listView);
         start = (Button) findViewById(R.id.start);
@@ -79,11 +85,14 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String filename = (String) parent.getAdapter().getItem(position);
                 filename = currentPath + File.separator + filename;
-                Toast.makeText(MainActivity.this, filename, Toast.LENGTH_LONG).show();
+                int lastSlashIndex = filename.lastIndexOf('/');
+                String title = filename.substring(lastSlashIndex+1);
+                Toast.makeText(MainActivity.this, title, Toast.LENGTH_LONG).show();
                 File file = new File(filename);
                 if (file.isDirectory()) {
                     List<String> values = listFiles(file);
                     currentPath = filename;
+                    Log.i("info",currentPath);
                     listView.setAdapter(new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_2, android.R.id.text1, values));
                 }
                 if (file.isFile()) {
@@ -97,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                         intent.putExtra("position", position);
                         Log.i("info", values.size() + " ");
                         intent.putExtra("list", values);
-                        if(!musicService.isPlaying()) {
+                        if (!musicService.isPlaying()) {
                             musicService.playMusic(intent);
                         } else {
                             musicService.stopMusic();
@@ -119,7 +128,7 @@ public class MainActivity extends AppCompatActivity {
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(musicService.isPlaying()) {
+                if (musicService.isPlaying()) {
                     musicService.stopMusic();
                 }
             }
@@ -127,31 +136,66 @@ public class MainActivity extends AppCompatActivity {
         up.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(currentPath != root.getPath()){
-                    File file = new File(currentPath);
-                    File parent = file.getParentFile();
-                    currentPath = parent.getPath();
-                    List<String> values = listFiles(parent);
-                    listView.setAdapter(new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_2, android.R.id.text1, values));
-
-                }
+                goParentDir();
             }
         });
         prew.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(musicService.isPlaying())
                 musicService.changeDirection(-1);
             }
         });
         next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                musicService.changeDirection(1);
+                if(musicService.isPlaying()) {
+                    musicService.changeDirection(1);
+                }
             }
         });
+        /*seekBar.setMax(1000);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    musicService.getMediaPlayer().seekTo(1000);
+                }
+            }
 
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });*/
+        /*new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int currentPosition = 0;
+                while (musicService.isPlaying()) {
+                    try {
+                        Thread.sleep(1000);
+                        currentPosition = musicService.getMediaPlayer().getCurrentPosition();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                        return;
+                    } catch (Exception e){
+                        e.printStackTrace();
+                        return;
+                    }
+                    final int total = musicService.getMediaPlayer().getDuration();
+                    seekBar.setMax(total);
+                    seekBar.setProgress(currentPosition);
+
+                }
+            }
+        }).start();*/
     }
-
 
 
     private List<String> listFiles(File dir) {
@@ -184,4 +228,19 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private void goParentDir(){
+        if (!currentPath.equals(root.getPath())) {
+            File file = new File(currentPath);
+            File parent = file.getParentFile();
+            currentPath = parent.getPath();
+            Log.i("info",currentPath);
+            List<String> values = listFiles(parent);
+            listView.setAdapter(new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_2, android.R.id.text1, values));
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        goParentDir();
+    }
 }
