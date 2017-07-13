@@ -12,6 +12,7 @@ import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 
 /**
@@ -72,22 +73,7 @@ public class MusicService extends Service {
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
-                    position++;
-                    try {
-                        while (!extensionTest(list.get(position))) {
-                            position++;
-                        }
-                    } catch (IndexOutOfBoundsException e){
-                        position = 0;
-                    }
-                    mediaPlayer.reset();
-                    try {
-                        mediaPlayer.setDataSource(MusicService.this, Uri.parse(list.get(position)));
-                        mediaPlayer.prepare();
-                        mediaPlayer.start();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    changeDirection(1);
                 }
 
             });
@@ -104,6 +90,47 @@ public class MusicService extends Service {
             e.printStackTrace();
         }
     }
+
+    public void changeDirection(int direction){
+        if(direction == -1){
+            try{
+                position--;
+                while (!extensionTest(list.get(position))) {
+                    position--;
+                }
+            } catch (IndexOutOfBoundsException e){
+                position = list.size();
+            }
+            changeTrack();
+
+        }
+        if(direction == 1){
+            try{
+                position++;
+                while (!extensionTest(list.get(position))) {
+                    position++;
+                }
+            } catch (IndexOutOfBoundsException e){
+                position = 0;
+            }
+            changeTrack();
+
+        }
+
+    }
+
+    private void changeTrack(){
+        mediaPlayer.reset();
+        try {
+            mediaPlayer.setDataSource(this, Uri.parse(list.get(position)));
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     public void pauseMusic() {
         if (isPlaying()) {

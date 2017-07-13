@@ -27,7 +27,7 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Button start, stop, up;
+    private Button start, stop, up, prew, next;
     private ListView listView;
     private String currentPath;
     private boolean bounded;
@@ -60,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
-
         Intent intent = new Intent(MainActivity.this, MusicService.class);
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         startService(new Intent(this, MusicService.class));
@@ -70,7 +69,9 @@ public class MainActivity extends AppCompatActivity {
         start = (Button) findViewById(R.id.start);
         stop = (Button) findViewById(R.id.stop);
         up = (Button) findViewById(R.id.up);
-        List values = listFiles(root);
+        prew = (Button) findViewById(R.id.prew);
+        next = (Button) findViewById(R.id.next);
+        List<String> values = listFiles(root);
         final ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_2, android.R.id.text1, values);
         listView.setAdapter(adapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -91,15 +92,19 @@ public class MainActivity extends AppCompatActivity {
                         for (int i = 0; i < values.size(); i++) {
                             values.set(i, currentPath + File.separator + values.get(i));
                         }
+
                         Intent intent = new Intent();
                         intent.putExtra("position", position);
                         Log.i("info", values.size() + " ");
                         intent.putExtra("list", values);
                         if(!musicService.isPlaying()) {
                             musicService.playMusic(intent);
+                        } else {
+                            musicService.stopMusic();
+                            musicService.playMusic(intent);
                         }
                     } catch (Exception e) {
-
+                        e.printStackTrace();
                     }
                 }
 
@@ -132,9 +137,22 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
+        prew.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicService.changeDirection(-1);
+            }
+        });
+        next.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                musicService.changeDirection(1);
+            }
+        });
 
     }
+
+
 
     private List<String> listFiles(File dir) {
         List values = new ArrayList<String>();
