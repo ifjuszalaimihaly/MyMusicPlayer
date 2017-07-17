@@ -106,12 +106,7 @@ public class MainActivity extends AppCompatActivity {
                         intent.putExtra("position", position);
                         Log.i("info", values.size() + " ");
                         intent.putExtra("list", values);
-                        if (!musicService.isPlaying()) {
-                            musicService.playMusic(intent);
-                        } else {
-                            musicService.stopMusic();
-                            musicService.playMusic(intent);
-                        }
+                        musicService.playMusic(intent);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -199,6 +194,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     private List<String> listFiles(File dir) {
+        //TODO select just playable files
         List values = new ArrayList<String>();
         if (dir.canRead()) {
             String[] list = dir.list();

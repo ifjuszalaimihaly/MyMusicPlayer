@@ -64,12 +64,16 @@ public class MusicService extends Service {
         position = intent.getIntExtra("position", 0);
         list = (ArrayList<String>) intent.getSerializableExtra("list");
         Log.i("info", list.get(position));
+        if(isPlaying()){
+            mediaPlayer.stop();
+        }
         while (!extensionTest(list.get(position))){
             position++;
         }
         try {
             mediaPlayer = MediaPlayer.create(this, Uri.parse(list.get(position)));
             mediaPlayer.start();
+            notification();
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
@@ -78,15 +82,6 @@ public class MusicService extends Service {
 
             });
             isPlaying = true;
-            PendingIntent pendingIntent = PendingIntent.getActivity(MusicService.this, 0, new Intent(MusicService.this, MainActivity.class), 0);
-            int lastSlashIndex = list.get(position).lastIndexOf('/');
-            String title = list.get(position).substring(lastSlashIndex+1);
-            Notification notification = new Notification.Builder(this)
-                    .setSmallIcon(R.mipmap.ic_launcher_round)
-                    .setContentTitle(title)
-                    .setContentIntent(pendingIntent)
-                    .setAutoCancel(true).build();
-            startForeground(1, notification);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -126,6 +121,7 @@ public class MusicService extends Service {
             mediaPlayer.setDataSource(this, Uri.parse(list.get(position)));
             mediaPlayer.prepare();
             mediaPlayer.start();
+            notification();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -150,6 +146,7 @@ public class MusicService extends Service {
         mediaPlayer.stop();
         mediaPlayer.release();
         isPlaying = false;
+        stopForeground(true);
     }
 
     public boolean isPlaying() {
@@ -172,4 +169,15 @@ public class MusicService extends Service {
         }
     }
 
+    private void notification(){
+        PendingIntent pendingIntent = PendingIntent.getActivity(MusicService.this, 0, new Intent(MusicService.this, MainActivity.class), 0);
+        int lastSlashIndex = list.get(position).lastIndexOf('/');
+        String title = list.get(position).substring(lastSlashIndex+1);
+        Notification notification = new Notification.Builder(this)
+                .setSmallIcon(R.mipmap.ic_launcher_round)
+                .setContentTitle(title)
+                .setContentIntent(pendingIntent)
+                .setAutoCancel(true).build();
+        startForeground(1, notification);
+    }
 }
