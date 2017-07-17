@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
@@ -27,6 +28,7 @@ public class MusicService extends Service {
     private boolean isPlaying = false;
     private boolean paused = false;
     private ArrayList<String> list;
+    //TODO remove mediaplayer getter and setter, and isplaying
 
 
     public class LocalBinder extends Binder {
@@ -66,6 +68,7 @@ public class MusicService extends Service {
         Log.i("info", list.get(position));
         if(isPlaying()){
             mediaPlayer.stop();
+            isPlaying = false;
         }
         while (!extensionTest(list.get(position))){
             position++;

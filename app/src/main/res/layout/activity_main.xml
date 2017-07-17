@@ -76,7 +76,7 @@
         app:layout_constraintRight_toLeftOf="@+id/stop"
         android:layout_marginRight="8dp" />
 
-    <!--<SeekBar
+    <SeekBar
         android:id="@+id/seekBar"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -84,5 +84,5 @@
         app:layout_constraintLeft_toLeftOf="parent"
         tools:layout_editor_absoluteY="86dp"
         android:layout_marginRight="8dp"
-        app:layout_constraintRight_toRightOf="parent" />-->
+        app:layout_constraintRight_toRightOf="parent" />
 </android.support.constraint.ConstraintLayout>

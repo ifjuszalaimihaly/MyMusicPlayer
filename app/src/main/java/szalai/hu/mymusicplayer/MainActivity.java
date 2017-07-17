@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Environment;
 import android.os.IBinder;
@@ -25,8 +26,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Handler;
-import java.util.logging.LogRecord;
+import android.os.Handler;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     private MusicService musicService;
     private SeekBar seekBar;
     private File root;
+    private Handler handler;
+    private Runnable runnable;
 
 
     @Override
@@ -77,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
         up = (Button) findViewById(R.id.up);
         prew = (Button) findViewById(R.id.prew);
         next = (Button) findViewById(R.id.next);
+        seekBar = (SeekBar) findViewById(R.id.seekBar);
         List<String> values = listFiles(root);
         final ArrayAdapter adapter = new ArrayAdapter(this, android.R.layout.simple_list_item_2, android.R.id.text1, values);
         listView.setAdapter(adapter);
@@ -107,6 +111,7 @@ public class MainActivity extends AppCompatActivity {
                         Log.i("info", values.size() + " ");
                         intent.putExtra("list", values);
                         musicService.playMusic(intent);
+                        initSeekBar();
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -149,49 +154,24 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        /*seekBar.setMax(1000);
-        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    musicService.getMediaPlayer().seekTo(1000);
-                }
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });*/
-        /*new Thread(new Runnable() {
-            @Override
-            public void run() {
-                int currentPosition = 0;
-                while (musicService.isPlaying()) {
-                    try {
-                        Thread.sleep(1000);
-                        currentPosition = musicService.getMediaPlayer().getCurrentPosition();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                        return;
-                    } catch (Exception e){
-                        e.printStackTrace();
-                        return;
-                    }
-                    final int total = musicService.getMediaPlayer().getDuration();
-                    seekBar.setMax(total);
-                    seekBar.setProgress(currentPosition);
-
-                }
-            }
-        }).start();*/
     }
 
+    private void playCycle(){
+        if(musicService.getMediaPlayer() !=null) {
+            handler = new Handler();
+            Log.i("info", musicService.getMediaPlayer().getCurrentPosition() + " ");
+            seekBar.setProgress(musicService.getMediaPlayer().getCurrentPosition());
+            if (musicService.getMediaPlayer().isPlaying()) {
+                runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        playCycle();
+                    }
+                };
+                handler.postDelayed(runnable, 100);
+            }
+        }
+    }
 
     private List<String> listFiles(File dir) {
         //TODO select just playable files
@@ -238,5 +218,33 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         goParentDir();
+    }
+
+    private void initSeekBar(){
+        musicService.getMediaPlayer().setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                seekBar.setMax(musicService.getMediaPlayer().getDuration());
+                playCycle();
+            }
+        });
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) {
+                    musicService.getMediaPlayer().seekTo(progress);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
 }
