@@ -76,6 +76,7 @@ public class MusicService extends Service {
             mediaPlayer = MediaPlayer.create(this, Uri.parse(list.get(position)));
             mediaPlayer.start();
             notification();
+            paused = false;
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mp) {
@@ -89,6 +90,7 @@ public class MusicService extends Service {
     }
 
     public void changeDirection(int direction) {
+        Log.i("info","change direction");
         if (direction == -1) {
             try {
                 position--;
@@ -117,12 +119,14 @@ public class MusicService extends Service {
     }
 
     private void changeTrack() {
+        Log.i("info","change track");
         mediaPlayer.reset();
         try {
             mediaPlayer.setDataSource(this, Uri.parse(list.get(position)));
             mediaPlayer.prepare();
             mediaPlayer.start();
             notification();
+            paused = false;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -144,7 +148,6 @@ public class MusicService extends Service {
     public void stopMusic() {
         mediaPlayer.stop();
         mediaPlayer.release();
-        mediaPlayer = null;
         stopForeground(true);
     }
 

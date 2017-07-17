@@ -26,6 +26,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
 import android.os.Handler;
 
 
@@ -38,7 +39,6 @@ public class MainActivity extends AppCompatActivity {
     private MusicService musicService;
     private SeekBar seekBar;
     private File root;
-    private Handler handler;
     private Runnable runnable;
 
 
@@ -72,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
         startService(new Intent(this, MusicService.class));
         root = Environment.getExternalStorageDirectory();
-        Log.i("info", "root " +root.getPath());
+        Log.i("info", "root " + root.getPath());
         currentPath = root.getPath();
         listView = (ListView) findViewById(R.id.listView);
         start = (Button) findViewById(R.id.start);
@@ -90,13 +90,13 @@ public class MainActivity extends AppCompatActivity {
                 String filename = (String) parent.getAdapter().getItem(position);
                 filename = currentPath + File.separator + filename;
                 int lastSlashIndex = filename.lastIndexOf('/');
-                String title = filename.substring(lastSlashIndex+1);
+                String title = filename.substring(lastSlashIndex + 1);
                 Toast.makeText(MainActivity.this, title, Toast.LENGTH_LONG).show();
                 File file = new File(filename);
                 if (file.isDirectory()) {
                     List<String> values = listFiles(file);
                     currentPath = filename;
-                    Log.i("info",currentPath);
+                    Log.i("info", currentPath);
                     listView.setAdapter(new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_2, android.R.id.text1, values));
                 }
                 if (file.isFile()) {
@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                         for (int i = 0; i < values.size(); i++) {
                             values.set(i, currentPath + File.separator + values.get(i));
                         }
-                        musicService.playMusic(new Intent().putExtra("position",position).putExtra("list",values));
+                        musicService.playMusic(new Intent().putExtra("position", position).putExtra("list", values));
                         initSeekBar();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -117,18 +117,16 @@ public class MainActivity extends AppCompatActivity {
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               musicService.pauseMusic();
-                initSeekBar();
+                musicService.pauseMusic();
 
             }
         });
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (musicService.getMediaPlayer() != null && musicService.getMediaPlayer().isPlaying()) {
-                    musicService.stopMusic();
-                    seekBar.setProgress(0);
-                }
+                //unbindService(serviceConnection);
+                musicService.stopMusic();
+                //onDestroy();
             }
         });
         up.setOnClickListener(new View.OnClickListener() {
@@ -140,25 +138,24 @@ public class MainActivity extends AppCompatActivity {
         prew.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(musicService.getMediaPlayer() != null && musicService.getMediaPlayer().isPlaying())
-                musicService.changeDirection(-1);
+                if (musicService.getMediaPlayer() != null)
+                    musicService.changeDirection(-1);
             }
         });
         next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(musicService.getMediaPlayer() != null && musicService.getMediaPlayer().isPlaying()) {
+                if (musicService.getMediaPlayer() != null) {
                     musicService.changeDirection(1);
                 }
             }
         });
     }
 
-    private void playCycle(){
+    private void playCycle() {
         try {
             if (musicService.getMediaPlayer() != null) {
-                handler = new Handler();
-                Log.i("info", musicService.getMediaPlayer().getCurrentPosition() + " ");
+                Handler handler = new Handler();
                 seekBar.setProgress(musicService.getMediaPlayer().getCurrentPosition());
                 if (musicService.getMediaPlayer().isPlaying()) {
                     runnable = new Runnable() {
@@ -170,7 +167,7 @@ public class MainActivity extends AppCompatActivity {
                     handler.postDelayed(runnable, 100);
                 }
             }
-        } catch (IllegalStateException exp){
+        } catch (IllegalStateException exp) {
             exp.printStackTrace();
         }
     }
@@ -206,12 +203,12 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private void goParentDir(){
+    private void goParentDir() {
         if (!currentPath.equals(root.getPath())) {
             File file = new File(currentPath);
             File parent = file.getParentFile();
             currentPath = parent.getPath();
-            Log.i("info",currentPath);
+            Log.i("info", currentPath);
             List<String> values = listFiles(parent);
             listView.setAdapter(new ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_2, android.R.id.text1, values));
         }
@@ -222,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
         goParentDir();
     }
 
-    private void initSeekBar(){
+    private void initSeekBar() {
         musicService.getMediaPlayer().setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
@@ -250,9 +247,4 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        handler.removeCallbacks(runnable);
-    }
 }
