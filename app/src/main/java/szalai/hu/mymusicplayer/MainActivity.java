@@ -105,12 +105,7 @@ public class MainActivity extends AppCompatActivity {
                         for (int i = 0; i < values.size(); i++) {
                             values.set(i, currentPath + File.separator + values.get(i));
                         }
-
-                        Intent intent = new Intent();
-                        intent.putExtra("position", position);
-                        Log.i("info", values.size() + " ");
-                        intent.putExtra("list", values);
-                        musicService.playMusic(intent);
+                        musicService.playMusic(new Intent().putExtra("position",position).putExtra("list",values));
                         initSeekBar();
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -122,14 +117,17 @@ public class MainActivity extends AppCompatActivity {
         start.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                musicService.pauseMusic();
+               musicService.pauseMusic();
+                initSeekBar();
+
             }
         });
         stop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (musicService.isPlaying()) {
+                if (musicService.getMediaPlayer() != null && musicService.getMediaPlayer().isPlaying()) {
                     musicService.stopMusic();
+                    seekBar.setProgress(0);
                 }
             }
         });
@@ -142,14 +140,14 @@ public class MainActivity extends AppCompatActivity {
         prew.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(musicService.isPlaying())
+                if(musicService.getMediaPlayer() != null && musicService.getMediaPlayer().isPlaying())
                 musicService.changeDirection(-1);
             }
         });
         next.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(musicService.isPlaying()) {
+                if(musicService.getMediaPlayer() != null && musicService.getMediaPlayer().isPlaying()) {
                     musicService.changeDirection(1);
                 }
             }
@@ -157,19 +155,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void playCycle(){
-        if(musicService.getMediaPlayer() !=null) {
-            handler = new Handler();
-            Log.i("info", musicService.getMediaPlayer().getCurrentPosition() + " ");
-            seekBar.setProgress(musicService.getMediaPlayer().getCurrentPosition());
-            if (musicService.getMediaPlayer().isPlaying()) {
-                runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        playCycle();
-                    }
-                };
-                handler.postDelayed(runnable, 100);
+        try {
+            if (musicService.getMediaPlayer() != null) {
+                handler = new Handler();
+                Log.i("info", musicService.getMediaPlayer().getCurrentPosition() + " ");
+                seekBar.setProgress(musicService.getMediaPlayer().getCurrentPosition());
+                if (musicService.getMediaPlayer().isPlaying()) {
+                    runnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            playCycle();
+                        }
+                    };
+                    handler.postDelayed(runnable, 100);
+                }
             }
+        } catch (IllegalStateException exp){
+            exp.printStackTrace();
         }
     }
 
@@ -246,5 +248,11 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeCallbacks(runnable);
     }
 }
